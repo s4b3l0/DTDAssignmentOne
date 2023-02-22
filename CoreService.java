@@ -6,7 +6,7 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
+//DEVNOTE: Skipping  encapsulation principle for this solution, so that there is less boilerplate code
 final class BatchDate {
     private int batchNumber;
     private LocalDate expDate;
