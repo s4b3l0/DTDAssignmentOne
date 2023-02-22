@@ -45,6 +45,17 @@ class Bakery {
 
     final List<String> soldProducts = new ArrayList<>();
 
+    final PriorityQueue priorityProducts = new PriorityQueue(new Comparator() {
+        @Override
+        public int compare(Object o1, Object o2) {
+            final LocalDate o1Exp = expDate.get(getBatchNumber((String) o1));
+            final LocalDate o2Exp = expDate.get(getBatchNumber((String) o2));
+            return o2Exp.compareTo(o1Exp);
+        }
+
+    });
+
+
     static int getBatchNumber(String name) {
         if (name == null) return -1;
         if (name.split(" ").length != 3) return -1;
@@ -142,6 +153,43 @@ class Bakery {
     public void loadSheddingAdjust() {
         expDate.forEach(((batchNo, localDate) -> expDate.put(batchNo, localDate.minusDays(1))));
     }
+
+    public void sellUnits(Integer units) {
+        priorityProducts.clear();
+        this.salesProducts.forEach(p -> priorityProducts.offer(p));
+        listPriorityBatch(priorityProducts);
+
+        int initialSize = priorityProducts.size();
+
+        while (initialSize - priorityProducts.size() != units && priorityProducts.size() > 0) {
+
+            String prod = (String) priorityProducts.poll();
+
+            this.soldProducts.add(prod.substring(0, prod.lastIndexOf(' ')));
+            this.salesProducts.remove(prod);
+            if (this.salesProducts.stream().filter(x -> getBatchNumber(x) == getBatchNumber(prod)).collect(Collectors.toList()).size() == 0) {
+                this.expDate.remove(getBatchNumber(prod));
+            }
+        }
+        System.out.println("Remaining in priority products after sales");
+        listPriorityBatch(priorityProducts);
+    }
+
+    private void listPriorityBatch(PriorityQueue priorityQueue) {
+        System.out.println(CoreService.ANSI_YELLOW);
+        System.out.println("______________PRIORITY_INVENTORY_________________");
+        final String firstField = "| %-40s |";
+        final String field = " %-40s |";
+        final String heading1 = String.format(firstField, "INVENTORY").replace(' ', '_');
+        final String heading2 = String.format(field, "EXPIRY DATES").replace(' ', '_');
+        System.out.println(heading1 + heading2);
+        priorityQueue.forEach(prod -> {
+            final String product = String.format(firstField, prod);
+            final String expiryDate = String.format(field, expDate.get(getBatchNumber((String) prod)));
+            System.out.println(product + expiryDate);
+        });
+        System.out.println(CoreService.ANSI_RESET);
+    }
 }
 
 
@@ -155,16 +203,15 @@ public class CoreService {
     public static void main(String[] args) throws NoSuchMethodException {
         Bakery bakery = new Bakery();
         bakery.salesProducts.add("Croissant batch 220");
+        bakery.salesProducts.add("Croissant batch 280");
+        bakery.salesProducts.add("Croissant batch 230");
+        bakery.salesProducts.add("Croissant batch 230");
         bakery.salesProducts.add("Croissant batch 220");
-        bakery.salesProducts.add("Croissant batch 230");
-        bakery.salesProducts.add("Croissant batch 230");
-        bakery.salesProducts.add("Croissant batch 280");
         bakery.salesProducts.add("Croissant batch 280");
 
-
-        bakery.expDate.put(220, LocalDate.of(2020, 12, 30));
+        bakery.expDate.put(280, LocalDate.of(2022, 12, 30));
         bakery.expDate.put(230, LocalDate.of(2023, 12, 30));
-        bakery.expDate.put(280, LocalDate.of(2025, 12, 30));
+        bakery.expDate.put(220, LocalDate.of(2020, 12, 30));
 
         bakery.listInventory();
 
@@ -271,6 +318,44 @@ public class CoreService {
                    }
                }
                break;
+            case 'G':
+                while (input == null) {
+                    final String message = "Sell by freshness?";
+                    try {
+                        input = generiDialogPrompt(message, null ,null);
+
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                if (input.equalsIgnoreCase("Y")) {
+                    String message = ANSI_RED + "How many units do you wish to sell?\n:" + ANSI_RESET;
+                    Integer units = null;
+                    while (units == null) {
+                        try {
+                            System.out.print(message);
+                            Scanner scanner = new Scanner(System.in);
+                            units = scanner.nextInt();
+                        } catch (Exception e) {
+                            units = null;
+                            System.out.println(ANSI_RED + "Input is invalid" + ANSI_RESET);
+                        }
+                    }
+                    bakery.sellUnits(units);
+                }
+
+                //expDate, expStock, soldProducts, priorityProducts and salesProducts.
+                break;
+            case 'M':
+                System.out.println(ANSI_GREEN + "_____________Number of Records Summary_______________");
+                System.out.println("expDate         :" + bakery.expDate.size());
+                System.out.println("expStock        :" + bakery.expStock.size());
+                System.out.println("soldProducts    :" + bakery.soldProducts.size());
+                System.out.println("priorityProducts:" + bakery.priorityProducts.size());
+                System.out.println("salesProducts   :" + bakery.salesProducts.size()+ ANSI_RESET);
+                break;
             case 'X':
                 System.exit(0);
                 break;
@@ -284,8 +369,11 @@ public class CoreService {
             String input = scanner.nextLine();
             if (input.length() == 1) {
                 switch (input.toUpperCase().charAt(0)) {
+                    case 'y':
                     case 'Y':
-                        method.invoke(object);
+                        if (object != null) {
+                            method.invoke(object);
+                        }
                         return input;
                     case 'N':
                         return input;
@@ -311,6 +399,8 @@ public class CoreService {
         System.out.println("Type L list product and expiry dates");
         System.out.println("Type E list batch and expiry dates");
         System.out.println("Type S sell all unexpired products");
+        System.out.println("Type G to sell by freshest to least fresh");
+        System.out.println("Type M to list number of elements in each data set");
         System.out.println("Type X to exit");
         System.out.print(ANSI_GREEN + ":");
 
