@@ -117,31 +117,26 @@ class Bakery {
     }
 
     public void removeExpiredBatches() {
-        final List<Integer>  batchToDelete = new ArrayList<>(); //To avoid concurrency exception
+        final List<Integer> batchToDelete = new ArrayList<>(); //To avoid concurrency exception
         this.expDate.forEach((batchNo, date) -> {
-            if (date.isBefore(LocalDate.now())){
-               final BatchDate batchDate = new BatchDate(batchNo, date);
-               final List<String> expiredStock = salesProducts
-                       .stream()
-                       .filter(salesProduct -> getBatchNumber(salesProduct) == batchNo)
-                       .collect(Collectors.toList());
-               expStock.put(batchDate, expiredStock);
-               salesProducts.removeIf(salesProduct -> getBatchNumber(salesProduct) == batchNo);
-               batchToDelete.add(batchNo);
+            if (date.isBefore(LocalDate.now())) {
+                final BatchDate batchDate = new BatchDate(batchNo, date);
+                final List<String> expiredStock = salesProducts.stream().filter(salesProduct -> getBatchNumber(salesProduct) == batchNo).collect(Collectors.toList());
+                expStock.put(batchDate, expiredStock);
+                salesProducts.removeIf(salesProduct -> getBatchNumber(salesProduct) == batchNo);
+                batchToDelete.add(batchNo);
             }
         });
         batchToDelete.forEach(batchNo -> expDate.remove(batchNo));
     }
 
     public void sellIt() {
-        final List<Integer>  batchToDelete = new ArrayList<>(); //To avoid concurrency exception
-        this.expDate.forEach((batchNo, data ) -> {
+        final List<Integer> batchToDelete = new ArrayList<>(); //To avoid concurrency exception
+        this.expDate.forEach((batchNo, data) -> {
             if (data.isAfter(LocalDate.now())) {
                 final List<String> Sold = salesProducts;
-                soldProducts.addAll( salesProducts
-                        .stream().filter(soldProduct -> getBatchNumber(soldProduct) == batchNo) //is stream framework allowed ?
-                        .map(prod -> prod.substring(0, prod.lastIndexOf(' ')))
-                        .collect(Collectors.toList()));
+                soldProducts.addAll(salesProducts.stream().filter(soldProduct -> getBatchNumber(soldProduct) == batchNo) //is stream framework allowed ?
+                        .map(prod -> prod.substring(0, prod.lastIndexOf(' '))).collect(Collectors.toList()));
                 salesProducts.removeIf(salesProduct -> getBatchNumber(salesProduct) == batchNo);
                 batchToDelete.add(batchNo);
             }
@@ -278,12 +273,13 @@ public class CoreService {
                         switch (input.toUpperCase().charAt(0)) {
                             case 'Y':
                                 bakery.removeExpiredBatches();
-                                bakery.expStock.forEach((batchDate, list)  -> {
-                                    System.out.println(ANSI_YELLOW + "\nBatch Group:"  + batchDate.getBatchNumber() + "\nExpired:" + batchDate.getExpDate());
+                                bakery.expStock.forEach((batchDate, list) -> {
+                                    System.out.println(ANSI_YELLOW + "\nBatch Group:" + batchDate.getBatchNumber() + "\nExpired:" + batchDate.getExpDate());
                                     bakery.listInventory(list, batchDate.getExpDate());
                                 });
                                 break;
-                            case 'N': break;
+                            case 'N':
+                                break;
                             default:
                                 System.out.println(ANSI_RED + "Unknown operation selected" + ANSI_RESET);
                                 input = null;
@@ -298,7 +294,7 @@ public class CoreService {
                 while (input == null) {
                     final String message = "Sell all unexpired inventory to continue enter Y to confirm [ Y / N ]?";
                     try {
-                        input = generiDialogPrompt(message, bakery ,bakery.getClass().getDeclaredMethod("sellIt"));
+                        input = generiDialogPrompt(message, bakery, bakery.getClass().getDeclaredMethod("sellIt"));
                     } catch (InvocationTargetException e) {
                         throw new RuntimeException(e);
                     } catch (IllegalAccessException e) {
@@ -307,22 +303,22 @@ public class CoreService {
                 }
                 break;
             case 'U':
-               while (input == null) {
-                   final String message = "Adjust expiry dates for inventory items [ Y / N ]?";
-                   try {
-                       input = generiDialogPrompt(message, bakery ,bakery.getClass().getDeclaredMethod("loadSheddingAdjust"));
-                   } catch (InvocationTargetException e) {
-                       throw new RuntimeException(e);
-                   } catch (IllegalAccessException e) {
-                       throw new RuntimeException(e);
-                   }
-               }
-               break;
+                while (input == null) {
+                    final String message = "Adjust expiry dates for inventory items [ Y / N ]?";
+                    try {
+                        input = generiDialogPrompt(message, bakery, bakery.getClass().getDeclaredMethod("loadSheddingAdjust"));
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                break;
             case 'G':
                 while (input == null) {
                     final String message = "Sell by freshness?";
                     try {
-                        input = generiDialogPrompt(message, null ,null);
+                        input = generiDialogPrompt(message, null, null);
 
                     } catch (InvocationTargetException e) {
                         throw new RuntimeException(e);
@@ -354,7 +350,7 @@ public class CoreService {
                 System.out.println("expStock        :" + bakery.expStock.size());
                 System.out.println("soldProducts    :" + bakery.soldProducts.size());
                 System.out.println("priorityProducts:" + bakery.priorityProducts.size());
-                System.out.println("salesProducts   :" + bakery.salesProducts.size()+ ANSI_RESET);
+                System.out.println("salesProducts   :" + bakery.salesProducts.size() + ANSI_RESET);
                 break;
             case 'X':
                 System.exit(0);
@@ -364,28 +360,29 @@ public class CoreService {
     }
 
     static String generiDialogPrompt(String message, Object object, Method method) throws InvocationTargetException, IllegalAccessException {
-            System.out.print(ANSI_RED + message + "\n:" + ANSI_RESET);
-            final Scanner scanner = new Scanner(System.in);
-            String input = scanner.nextLine();
-            if (input.length() == 1) {
-                switch (input.toUpperCase().charAt(0)) {
-                    case 'y':
-                    case 'Y':
-                        if (object != null) {
-                            method.invoke(object);
-                        }
-                        return input;
-                    case 'N':
-                        return input;
-                    default:
-                        System.out.println(ANSI_RED + "Unknown operation selected" + ANSI_RESET);
-                        return input;
-                }
-            } else {
-                System.out.println(ANSI_RED + "Unknown operation selected" + ANSI_RESET);
-                return input;
+        System.out.print(ANSI_RED + message + "\n:" + ANSI_RESET);
+        final Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
+        if (input.length() == 1) {
+            switch (input.toUpperCase().charAt(0)) {
+                case 'y':
+                case 'Y':
+                    if (object != null) {
+                        method.invoke(object);
+                    }
+                    return input;
+                case 'N':
+                    return input;
+                default:
+                    System.out.println(ANSI_RED + "Unknown operation selected" + ANSI_RESET);
+                    return input;
             }
+        } else {
+            System.out.println(ANSI_RED + "Unknown operation selected" + ANSI_RESET);
+            return input;
+        }
     }
+
     /**
      * This method will print list available inventory on the standard io
      */
