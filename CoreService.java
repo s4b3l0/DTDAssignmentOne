@@ -41,8 +41,6 @@ class Bakery {
     final HashMap<Integer, LocalDate> expDate = new HashMap<>();
     final HashMap<BatchDate, List> expStock = new HashMap<>();
 
-    final List<String> getSalesProducts = new ArrayList<>();
-
     final List<String> soldProducts = new ArrayList<>();
 
     final PriorityQueue priorityProducts = new PriorityQueue(new Comparator() {
@@ -203,10 +201,18 @@ public class CoreService {
         bakery.salesProducts.add("Croissant batch 230");
         bakery.salesProducts.add("Croissant batch 220");
         bakery.salesProducts.add("Croissant batch 280");
+        bakery.salesProducts.add("Croissant batch 282");
+        bakery.salesProducts.add("Croissant batch 289");
+        bakery.salesProducts.add("Croissant batch 285");
+        bakery.salesProducts.add("Croissant batch 212");
 
-        bakery.expDate.put(280, LocalDate.of(2022, 12, 30));
-        bakery.expDate.put(230, LocalDate.of(2023, 12, 30));
-        bakery.expDate.put(220, LocalDate.of(2020, 12, 30));
+        bakery.expDate.put(280, LocalDate.of(2022, 11, 25));
+        bakery.expDate.put(230, LocalDate.of(2023, 4, 12));
+        bakery.expDate.put(220, LocalDate.of(2020, 7, 13));
+        bakery.expDate.put(282, LocalDate.of(2022, 8, 06));
+        bakery.expDate.put(289, LocalDate.of(2029, 5, 30));
+        bakery.expDate.put(285, LocalDate.of(2025, 6, 24));
+        bakery.expDate.put(212, LocalDate.of(2012, 8, 05));
 
         bakery.listInventory();
 
