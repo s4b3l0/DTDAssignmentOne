@@ -39,11 +39,11 @@ class Bakery {
 
     final List<String> salesProducts = new ArrayList<>();
     final HashMap<Integer, LocalDate> expDate = new HashMap<>();
-    final HashMap<BatchDate, List> expStock = new HashMap<>();
+    final HashMap<BatchDate, List<String>> expStock = new HashMap<>();
 
     final List<String> soldProducts = new ArrayList<>();
 
-    final PriorityQueue priorityProducts = new PriorityQueue(new Comparator() {
+    final PriorityQueue<Object> priorityProducts = new PriorityQueue<Object>(new Comparator<Object>() {
         @Override
         public int compare(Object o1, Object o2) {
             final LocalDate o1Exp = expDate.get(getBatchNumber((String) o1));
@@ -59,10 +59,6 @@ class Bakery {
         if (name.split(" ").length != 3) return -1;
         if (!name.split(" ")[1].equalsIgnoreCase("batch")) return -1;
         return Integer.parseInt(name.split(" ")[2]);
-    }
-
-    public HashMap<BatchDate, List> getExpStock() {
-        return expStock;
     }
 
     /**
@@ -168,7 +164,7 @@ class Bakery {
         listPriorityBatch(priorityProducts);
     }
 
-    private void listPriorityBatch(PriorityQueue priorityQueue) {
+    private void listPriorityBatch(PriorityQueue<Object> priorityQueue) {
         System.out.println(CoreService.ANSI_YELLOW);
         System.out.println("______________PRIORITY_INVENTORY_________________");
         final String firstField = "| %-40s |";
